@@ -31,8 +31,20 @@
   >
     <app-board />
 
-    <!-- @if: la pantalla solo existe mientras NO se está jugando -->
-    @if (game.status() !== 'playing') {
+    <!-- @if: la pantalla solo existe mientras NO se está jugando.
+         La tabla de récords, si está abierta, ocupa su lugar. -->
+    @if (showLeaderboard()) {
+      <app-leaderboard
+        animate.enter="screen-enter"
+        animate.leave="screen-leave"
+        [entries]="leaderboard.entries()"
+        [status]="leaderboard.status()"
+        [mode]="game.mode()"
+        (close)="showLeaderboard.set(false)"
+        (retry)="leaderboard.load(game.mode())"
+        (modeChange)="game.setMode($event)"
+      />
+    } @else if (game.status() !== 'playing') {
       <!-- (output)="..." escucha los avisos del hijo.
            animate.enter / animate.leave: Angular pone esas clases CSS
            cuando el elemento aparece y cuando va a desaparecer. -->
@@ -46,6 +58,7 @@
         (start)="game.start()"
         (resume)="game.resume()"
         (modeChange)="game.setMode($event)"
+        (showLeaderboard)="showLeaderboard.set(true)"
       />
     }
   </div>

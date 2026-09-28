@@ -1,9 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { BoardComponent } from './board/board';
 import { GameScreenComponent } from './game-screen/game-screen';
 import { GAME_MODES } from './game/game-modes';
 import { GameService } from './game/game.service';
 import { Direction } from './game/game.types';
+import { LeaderboardComponent } from './leaderboard/leaderboard';
+import { LeaderboardService } from './leaderboard/leaderboard.service';
 import { ScoreboardComponent } from './scoreboard/scoreboard';
 import { SwipeDirective } from './swipe/swipe.directive';
 import { TouchControlsComponent } from './touch-controls/touch-controls';
@@ -31,6 +33,7 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
     BoardComponent,
     ScoreboardComponent,
     GameScreenComponent,
+    LeaderboardComponent,
     TouchControlsComponent,
     SwipeDirective,
   ],
@@ -46,15 +49,41 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
 export class App {
   // "protected" para poder usarlo en el template (app.html).
   protected readonly game = inject(GameService);
+  protected readonly leaderboard = inject(LeaderboardService);
+
+  /**
+   * ¿Se está viendo la tabla de récords? Es estado de la PANTALLA
+   * (qué se muestra), no del juego: por eso vive aquí y no en GameService.
+   */
+  protected readonly showLeaderboard = signal(false);
 
   /** Nombre del modo actual, para mostrarlo bajo el título. */
   protected readonly modeName = computed(
     () => GAME_MODES.find((m) => m.id === this.game.mode())?.name ?? '',
   );
 
+  constructor() {
+    // effect(): se ejecuta ahora y cada vez que cambie un signal que lea.
+    // Aquí lee showLeaderboard() y game.mode(), así que al abrir la tabla
+    // o al cambiar de modo con ella abierta, se pide el top a Supabase.
+    effect(() => {
+      if (this.showLeaderboard()) this.leaderboard.load(this.game.mode());
+    });
+  }
+
   protected onKeydown(event: KeyboardEvent): void {
     const key = event.key.toLowerCase();
     const status = this.game.status();
+
+    // Con la tabla de récords abierta, el teclado solo cierra la tabla
+    // (Escape) o cambia de modo (1, 2, 3); el resto no hace nada.
+    if (this.showLeaderboard()) {
+      if (key === 'escape') {
+        this.showLeaderboard.set(false);
+        return;
+      }
+      if (!GAME_MODES[Number(key) - 1]) return;
+    }
 
     // Enter / Espacio: la "acción principal" según el momento.
     // Si el foco está en un botón, dejamos que el propio botón haga su

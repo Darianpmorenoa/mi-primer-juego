@@ -8,7 +8,7 @@ import { GameMode, GameStatus } from '../game/game.types';
  *
  * Igual que el marcador, no inyecta el GameService:
  * - recibe datos del padre con inputs (status, score, mode...)
- * - AVISA al padre con outputs (start, resume, modeChange).
+ * - AVISA al padre con outputs (start, resume, modeChange, showLeaderboard).
  * Quien decide qué hacer con esos avisos es el padre.
  */
 @Component({
@@ -65,6 +65,9 @@ import { GameMode, GameStatus } from '../game/game.types';
     } @else {
       <button #playButton type="button" class="play" (click)="start.emit()">
         {{ status() === 'ready' ? 'Jugar' : 'Jugar otra vez' }}
+      </button>
+      <button type="button" class="secondary" (click)="showLeaderboard.emit()">
+        🏆 Récords
       </button>
     }
     <p class="hint">o pulsa Enter / Espacio</p>
@@ -148,6 +151,18 @@ import { GameMode, GameStatus } from '../game/game.types';
     .play:active {
       transform: translateY(0);
     }
+    .secondary {
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      color: var(--text);
+      background: var(--control);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .secondary:hover {
+      background: var(--control-hover);
+    }
     .record {
       font-family: var(--font-retro);
       font-size: 0.75rem;
@@ -181,6 +196,7 @@ export class GameScreenComponent {
   readonly start = output<void>();
   readonly resume = output<void>();
   readonly modeChange = output<GameMode>();
+  readonly showLeaderboard = output<void>();
 
   protected readonly modes = GAME_MODES;
 
