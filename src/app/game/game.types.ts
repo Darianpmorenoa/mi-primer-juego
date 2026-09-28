@@ -14,3 +14,12 @@ export interface Position {
  * así un error de tipeo como 'uppp' se detecta al compilar.
  */
 export type Direction = 'up' | 'down' | 'left' | 'right';
+
+/**
+ * En qué momento está la partida:
+ * - 'ready':   pantalla de inicio, aún no se ha jugado
+ * - 'playing': jugando
+ * - 'over':    Game Over (chocó)
+ * - 'won':     la serpiente llenó todo el tablero
+ */
+export type GameStatus = 'ready' | 'playing' | 'over' | 'won';

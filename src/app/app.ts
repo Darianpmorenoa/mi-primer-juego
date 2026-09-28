@@ -1,8 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { BoardComponent } from './board/board';
+import { GameScreenComponent } from './game-screen/game-screen';
 import { GameService } from './game/game.service';
-import { ScoreboardComponent } from './scoreboard/scoreboard';
 import { Direction } from './game/game.types';
+import { ScoreboardComponent } from './scoreboard/scoreboard';
 
 /** Qué dirección corresponde a cada tecla (flechas y WASD). */
 const KEY_TO_DIRECTION: Record<string, Direction> = {
@@ -22,8 +23,8 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
  */
 @Component({
   selector: 'app-root',
-  // Para usar <app-board> y <app-scoreboard> en el template hay que importarlos aquí.
-  imports: [BoardComponent, ScoreboardComponent],
+  // Para usar un componente en el template hay que importarlo aquí.
+  imports: [BoardComponent, ScoreboardComponent, GameScreenComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   // "host" escucha eventos fuera del template; con "document:" escuchamos
@@ -37,7 +38,19 @@ export class App {
   protected readonly game = inject(GameService);
 
   protected onKeydown(event: KeyboardEvent): void {
-    const direction = KEY_TO_DIRECTION[event.key.toLowerCase()];
+    const key = event.key.toLowerCase();
+
+    // Enter o Espacio empiezan la partida cuando no se está jugando.
+    // Si el foco está en un botón, dejamos que el propio botón haga su
+    // (click); si no, la partida empezaría dos veces.
+    if ((key === 'enter' || key === ' ') && this.game.status() !== 'playing') {
+      if (event.target instanceof HTMLButtonElement) return;
+      event.preventDefault();
+      this.game.start();
+      return;
+    }
+
+    const direction = KEY_TO_DIRECTION[key];
     if (!direction) return;
 
     // Evita que las flechas hagan scroll en la página.

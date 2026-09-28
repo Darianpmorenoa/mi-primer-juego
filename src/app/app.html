@@ -2,6 +2,20 @@
   <h1>Snake</h1>
   <!-- [score]="..." pasa un valor del padre al input del hijo -->
   <app-scoreboard [score]="game.score()" />
-  <app-board />
+
+  <div class="stage">
+    <app-board />
+
+    <!-- @if: la pantalla solo existe mientras NO se está jugando -->
+    @if (game.status() !== 'playing') {
+      <!-- (start)="..." escucha el output del hijo -->
+      <app-game-screen
+        [status]="game.status()"
+        [score]="game.score()"
+        (start)="game.start()"
+      />
+    }
+  </div>
+
   <p class="hint">Usa las flechas o WASD para moverte</p>
 </main>

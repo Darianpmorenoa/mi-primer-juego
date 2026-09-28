@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Direction, Position } from './game.types';
+import { Direction, GameStatus, Position } from './game.types';
 
 /** Cuánto se mueve la cabeza en cada dirección (en celdas). */
 const MOVES: Record<Direction, Position> = {
@@ -57,6 +57,10 @@ export class GameService {
   private readonly _food = signal<Position | null>(this.randomFreeCell(this._snake()));
   readonly food = this._food.asReadonly();
 
+  /** En qué momento está la partida (inicio, jugando, Game Over...). */
+  private readonly _status = signal<GameStatus>('ready');
+  readonly status = this._status.asReadonly();
+
   // computed(): un signal que se CALCULA a partir de otros.
   // No guardamos el puntaje aparte: se deduce del largo de la serpiente,
   // así nunca pueden quedar desincronizados.
@@ -69,45 +73,80 @@ export class GameService {
 
   private timerId: ReturnType<typeof setInterval> | null = null;
 
+  /** Empieza una partida nueva (sirve también para "jugar otra vez"). */
+  start(): void {
+    this.stopTimer();
+
+    const snake = this.initialSnake();
+    this._snake.set(snake);
+    this._food.set(this.randomFreeCell(snake));
+    this.direction = 'right';
+    this.nextDirection = 'right';
+    this._status.set('playing');
+
+    this.timerId = setInterval(() => this.tick(), this.tickMs);
+  }
+
   /** Lo llaman los componentes cuando el jugador pulsa una dirección. */
   changeDirection(newDirection: Direction): void {
+    if (this._status() !== 'playing') return;
+
     // Comparamos con la dirección del último paso real (no con nextDirection).
     // Si no, pulsando ↑ y ← muy rápido yendo a la derecha, la serpiente
     // podría girar 180° dentro del mismo paso.
     if (newDirection === OPPOSITE[this.direction]) return;
     this.nextDirection = newDirection;
-
-    // El juego arranca con la primera tecla.
-    if (this.timerId === null) {
-      this.timerId = setInterval(() => this.tick(), this.tickMs);
-    }
   }
 
   /** Un paso del juego: la serpiente avanza una celda. */
   private tick(): void {
     this.direction = this.nextDirection;
-    const head = this._snake()[0];
+    const snake = this._snake();
+    const head = snake[0];
     const move = MOVES[this.direction];
-
-    // Por ahora, al salir por un borde aparece por el lado contrario
-    // (el operador % "da la vuelta"). En la Fase 4 los bordes matarán.
-    const newHead: Position = {
-      x: (head.x + move.x + this.cols) % this.cols,
-      y: (head.y + move.y + this.rows) % this.rows,
-    };
+    const newHead: Position = { x: head.x + move.x, y: head.y + move.y };
 
     const food = this._food();
     const ate = food !== null && samePosition(newHead, food);
 
-    // Avanzar = poner una cabeza nueva delante y quitar el último segmento.
-    // Si comió, NO quitamos la cola: así la serpiente crece un segmento.
+    // Si no comió, la cola se mueve y deja libre su celda; si comió,
+    // la cola se queda (así la serpiente crece un segmento).
+    const body = ate ? snake : snake.slice(0, -1);
+
+    // Colisiones: contra un borde o contra su propio cuerpo.
+    // Comprobamos contra "body" y no contra "snake": perseguir tu propia
+    // cola justo detrás de ella es un movimiento válido.
+    if (this.isOutside(newHead) || body.some((part) => samePosition(part, newHead))) {
+      this.endGame('over');
+      return;
+    }
+
     // Creamos un array NUEVO en vez de modificar el viejo: así el signal
     // detecta el cambio.
-    const newSnake = ate ? [newHead, ...this._snake()] : [newHead, ...this._snake().slice(0, -1)];
+    const newSnake = [newHead, ...body];
     this._snake.set(newSnake);
 
     if (ate) {
-      this._food.set(this.randomFreeCell(newSnake));
+      const nextFood = this.randomFreeCell(newSnake);
+      this._food.set(nextFood);
+      // Sin celdas libres para la comida: la serpiente llenó el tablero.
+      if (nextFood === null) this.endGame('won');
+    }
+  }
+
+  private isOutside(pos: Position): boolean {
+    return pos.x < 0 || pos.y < 0 || pos.x >= this.cols || pos.y >= this.rows;
+  }
+
+  private endGame(result: 'over' | 'won'): void {
+    this.stopTimer();
+    this._status.set(result);
+  }
+
+  private stopTimer(): void {
+    if (this.timerId !== null) {
+      clearInterval(this.timerId);
+      this.timerId = null;
     }
   }
 
@@ -120,8 +159,6 @@ export class GameService {
         if (!snake.some((part) => samePosition(part, cell))) free.push(cell);
       }
     }
-    // Si la serpiente llena todo el tablero no hay dónde poner comida.
-    // (Ese caso, "ganar", lo trataremos en la Fase 4.)
     if (free.length === 0) return null;
     return free[Math.floor(Math.random() * free.length)];
   }
