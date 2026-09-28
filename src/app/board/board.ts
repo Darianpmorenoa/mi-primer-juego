@@ -1,5 +1,6 @@
-import { Component, ElementRef, afterNextRender, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, afterRenderEffect, inject, viewChild } from '@angular/core';
 import { GameService } from '../game/game.service';
+import { Position } from '../game/game.types';
 
 /**
  * BoardComponent: solo DIBUJA. No sabe nada de reglas del juego;
@@ -33,12 +34,13 @@ export class BoardComponent {
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
   constructor() {
-    // El canvas no existe hasta que Angular renderiza el template,
-    // así que esperamos a ese momento para dibujar.
-    afterNextRender(() => this.draw());
+    // afterRenderEffect: ejecuta la función cuando el canvas ya existe
+    // y la VUELVE a ejecutar cada vez que cambia un signal que lea dentro
+    // (aquí, game.snake()). Así el tablero se redibuja solo.
+    afterRenderEffect(() => this.draw(this.game.snake()));
   }
 
-  private draw(): void {
+  private draw(snake: readonly Position[]): void {
     const ctx = this.canvas().nativeElement.getContext('2d')!;
     const size = this.cellSize;
 
@@ -60,5 +62,11 @@ export class BoardComponent {
       ctx.lineTo(this.game.cols * size, y * size);
       ctx.stroke();
     }
+
+    // Serpiente: la cabeza (índice 0) más clara que el cuerpo
+    snake.forEach((part, i) => {
+      ctx.fillStyle = i === 0 ? '#a6e3a1' : '#40a02b';
+      ctx.fillRect(part.x * size + 1, part.y * size + 1, size - 2, size - 2);
+    });
   }
 }
