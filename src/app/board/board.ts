@@ -14,6 +14,9 @@ const COLORS = {
   tail: '#2f7a3a',
   crashed: '#f38ba8',
   eye: '#11111b',
+  obstacle: '#585b70',
+  obstacleLight: '#7f849c',
+  obstacleDark: '#45475a',
 };
 
 /**
@@ -69,16 +72,24 @@ export class BoardComponent {
   constructor() {
     // afterRenderEffect: ejecuta la función cuando el canvas ya existe
     // y la VUELVE a ejecutar cada vez que cambia un signal que lea dentro
-    // (snake, food y status). Así el tablero se redibuja solo.
-    afterRenderEffect(() => this.draw(this.game.snake(), this.game.food(), this.game.status()));
+    // (snake, food, obstacles y status). Así el tablero se redibuja solo.
+    afterRenderEffect(() =>
+      this.draw(this.game.snake(), this.game.food(), this.game.obstacles(), this.game.status()),
+    );
   }
 
-  private draw(snake: readonly Position[], food: Position | null, status: GameStatus): void {
+  private draw(
+    snake: readonly Position[],
+    food: Position | null,
+    obstacles: readonly Position[],
+    status: GameStatus,
+  ): void {
     const ctx = this.canvas().nativeElement.getContext('2d')!;
     // A partir de aquí dibujamos en "píxeles CSS"; el escalado hace el resto.
     ctx.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
 
     this.drawBackground(ctx);
+    this.drawObstacles(ctx, obstacles);
     if (food) this.drawFood(ctx, food);
     this.drawSnake(ctx, snake, status === 'over');
   }
@@ -91,6 +102,21 @@ export class BoardComponent {
         ctx.fillStyle = (x + y) % 2 === 0 ? COLORS.cellLight : COLORS.cellDark;
         ctx.fillRect(x * size, y * size, size, size);
       }
+    }
+  }
+
+  /** Obstáculos: bloques grises con relieve (borde claro arriba, oscuro abajo). */
+  private drawObstacles(ctx: CanvasRenderingContext2D, obstacles: readonly Position[]): void {
+    const size = this.cellSize;
+    for (const block of obstacles) {
+      const x = block.x * size;
+      const y = block.y * size;
+      ctx.fillStyle = COLORS.obstacleDark;
+      ctx.fillRect(x, y, size, size);
+      ctx.fillStyle = COLORS.obstacleLight;
+      ctx.fillRect(x, y, size - 2, size - 2);
+      ctx.fillStyle = COLORS.obstacle;
+      ctx.fillRect(x + 2, y + 2, size - 4, size - 4);
     }
   }
 

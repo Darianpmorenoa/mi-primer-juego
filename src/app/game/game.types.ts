@@ -28,9 +28,10 @@ export type GameStatus = 'ready' | 'playing' | 'paused' | 'over' | 'won';
 /**
  * Modos de juego:
  * - 'classic': los bordes matan
- * - 'portal':  sin paredes, se atraviesan los bordes
+ * - 'portal':    sin paredes, se atraviesan los bordes
+ * - 'obstacles': como el clásico, pero con bloques que también matan
  */
-export type GameMode = 'classic' | 'portal';
+export type GameMode = 'classic' | 'portal' | 'obstacles';
 
 /** Datos de un modo para mostrarlo en pantalla. */
 export interface GameModeInfo {

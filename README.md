@@ -6,17 +6,24 @@ El clásico juego de la serpiente, hecho con **Angular 21** para aprender cómo 
 
 ## Cómo jugar
 
-Come la comida roja para crecer y sumar puntos. Si chocas con un borde o contigo mismo, pierdes.
+Come la comida roja para crecer y sumar puntos. Elige un modo antes de empezar:
+
+| Modo | Reglas |
+|---|---|
+| **Clásico** | Los bordes y tu propio cuerpo te eliminan. |
+| **Sin paredes** | Atraviesas los bordes y apareces por el lado contrario. Solo te eliminas al chocar contigo. |
+| **Obstáculos** | Como el clásico, pero con bloques grises que también te eliminan. |
 
 | Acción | Teclado | Celular |
 |---|---|---|
 | Moverse | Flechas o <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Deslizar el dedo sobre el tablero o usar la cruceta |
+| Elegir modo | <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> | Botones de la pantalla de inicio |
 | Empezar / jugar otra vez | <kbd>Enter</kbd> o <kbd>Espacio</kbd> | Botón **Jugar** |
 | Pausar / continuar | <kbd>P</kbd>, <kbd>Esc</kbd> o <kbd>Espacio</kbd> | Botón **❚❚** |
 
 - Cada comida vale **10 puntos**.
 - Cada **50 puntos** subes de nivel y la serpiente va más rápido.
-- El **récord** se guarda en tu navegador y se conserva al recargar.
+- Cada modo tiene su propio **récord**, guardado en tu navegador (se conserva al recargar).
 - Si cambias de pestaña, la partida se pausa sola.
 
 ## Cómo está organizado
@@ -26,7 +33,9 @@ La idea principal: **la lógica vive en un servicio y los componentes solo muest
 ```
 src/app/
 ├── game/
-│   ├── game.types.ts        Tipos: Position, Direction, GameStatus
+│   ├── game.types.ts        Tipos: Position, Direction, GameStatus, GameMode
+│   ├── game-modes.ts        Lista de modos (nombre y descripción)
+│   ├── obstacles.ts         Mapa de obstáculos del modo Obstáculos
 │   └── game.service.ts      GameService: TODAS las reglas del juego
 ├── board/board.ts           Dibuja el tablero en un <canvas>
 ├── scoreboard/scoreboard.ts Muestra puntos, récord y nivel
@@ -38,7 +47,7 @@ src/app/
 
 | Pieza | Responsabilidad | Cómo se comunica |
 |---|---|---|
-| `GameService` | Movimiento, colisiones, comida, puntaje, niveles, pausa y récord | Expone *signals* de solo lectura y métodos (`start()`, `changeDirection()`...) |
+| `GameService` | Movimiento, colisiones, comida, puntaje, niveles, pausa, modos y récords | Expone *signals* de solo lectura y métodos (`start()`, `changeDirection()`...) |
 | `BoardComponent` | Dibujar en el canvas | Inyecta el servicio y lee sus signals |
 | `ScoreboardComponent` | Mostrar puntos, récord y nivel | Recibe datos por **inputs** |
 | `GameScreenComponent` | Pantallas sobre el tablero | **Inputs** para los datos y **outputs** (`start`, `resume`) para avisar |

@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { GAME_MODES } from './game-modes';
 import { Direction, GameMode, GameStatus, Position } from './game.types';
+import { OBSTACLES } from './obstacles';
 
 /** Cuánto se mueve la cabeza en cada dirección (en celdas). */
 const MOVES: Record<Direction, Position> = {
@@ -55,6 +56,18 @@ export class GameService {
   readonly cols = 20;
   readonly rows = 20;
 
+  // OJO con el orden: las propiedades se crean de arriba abajo, y la comida
+  // (más abajo) necesita saber ya el modo y los obstáculos.
+
+  /** Modo elegido (se recuerda para la próxima visita). */
+  private readonly _mode = signal<GameMode>(this.loadMode());
+  readonly mode = this._mode.asReadonly();
+
+  /** Obstáculos del modo actual: se deducen del modo, no se guardan aparte. */
+  readonly obstacles = computed<readonly Position[]>(() =>
+    this._mode() === 'obstacles' ? OBSTACLES : [],
+  );
+
   // Un signal es un valor que AVISA cuando cambia: quien lo lea
   // (por ejemplo el tablero) se actualiza solo.
   // La versión con "_" es privada y se puede modificar; hacia afuera
@@ -69,10 +82,6 @@ export class GameService {
   /** En qué momento está la partida (inicio, jugando, Game Over...). */
   private readonly _status = signal<GameStatus>('ready');
   readonly status = this._status.asReadonly();
-
-  /** Modo elegido (se recuerda para la próxima visita). */
-  private readonly _mode = signal<GameMode>(this.loadMode());
-  readonly mode = this._mode.asReadonly();
 
   // computed(): un signal que se CALCULA a partir de otros.
   // No guardamos el puntaje aparte: se deduce del largo de la serpiente,
@@ -142,6 +151,9 @@ export class GameService {
     this._mode.set(mode);
     // El aviso de "nuevo récord" era del modo anterior.
     this._isNewRecord.set(false);
+    // En la pantalla de inicio, recolocamos la comida por si quedó
+    // encima de un obstáculo del modo nuevo.
+    if (status === 'ready') this._food.set(this.randomFreeCell(this._snake()));
     this.saveToStorage(MODE_KEY, mode);
   }
 
@@ -198,12 +210,14 @@ export class GameService {
     // la cola se queda (así la serpiente crece un segmento).
     const body = ate ? snake : snake.slice(0, -1);
 
-    // Colisiones: contra un borde o contra su propio cuerpo.
-    // (En modo "Sin paredes" la cabeza nunca queda fuera, así que solo
-    // cuenta el cuerpo.)
+    // Colisiones: contra un borde, un obstáculo o su propio cuerpo.
+    // (En modo "Sin paredes" la cabeza nunca queda fuera, y fuera del modo
+    // "Obstáculos" la lista de obstáculos está vacía.)
     // Comprobamos contra "body" y no contra "snake": perseguir tu propia
     // cola justo detrás de ella es un movimiento válido.
-    if (this.isOutside(newHead) || body.some((part) => samePosition(part, newHead))) {
+    const hitsObstacle = this.obstacles().some((block) => samePosition(block, newHead));
+    const hitsItself = body.some((part) => samePosition(part, newHead));
+    if (this.isOutside(newHead) || hitsObstacle || hitsItself) {
       this.endGame('over');
       return;
     }
@@ -285,13 +299,14 @@ export class GameService {
     }
   }
 
-  /** Elige al azar una celda que no esté ocupada por la serpiente. */
+  /** Elige al azar una celda que no esté ocupada por la serpiente ni por un obstáculo. */
   private randomFreeCell(snake: readonly Position[]): Position | null {
+    const occupied = [...snake, ...this.obstacles()];
     const free: Position[] = [];
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         const cell = { x, y };
-        if (!snake.some((part) => samePosition(part, cell))) free.push(cell);
+        if (!occupied.some((part) => samePosition(part, cell))) free.push(cell);
       }
     }
     if (free.length === 0) return null;

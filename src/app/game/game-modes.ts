@@ -16,4 +16,9 @@ export const GAME_MODES: readonly GameModeInfo[] = [
     name: 'Sin paredes',
     description: 'Atraviesa los bordes y aparece por el otro lado.',
   },
+  {
+    id: 'obstacles',
+    name: 'Obstáculos',
+    description: 'Esquiva los bloques grises. Los bordes también eliminan.',
+  },
 ];
