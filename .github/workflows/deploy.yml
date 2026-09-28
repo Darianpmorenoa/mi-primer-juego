@@ -1,0 +1,57 @@
+# Publica el juego en GitHub Pages cada vez que se sube código a "main".
+# Resultado: https://darianpmorenoa.github.io/mi-primer-juego/
+name: Publicar en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Permite lanzarlo a mano desde la pestaña "Actions" de GitHub.
+  workflow_dispatch:
+
+# Permisos mínimos que necesita GitHub Pages para publicar.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si se suben dos cambios seguidos, solo se publica el último.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v5
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # La web vive en /mi-primer-juego/ (no en la raíz del dominio),
+      # así que el navegador debe buscar los archivos a partir de esa ruta.
+      - name: Compilar
+        run: npx ng build --base-href /mi-primer-juego/
+
+      - name: Preparar archivos para Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/snake-game/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
