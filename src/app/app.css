@@ -7,7 +7,7 @@ main {
 }
 
 h1 {
-  margin: 0;
+  margin: 0 0 -8px;
   font-family: var(--font-retro);
   font-size: 2rem;
   letter-spacing: 4px;
@@ -15,6 +15,14 @@ h1 {
   text-shadow:
     0 0 16px rgb(166 227 161 / 0.5),
     3px 3px 0 #2f7a3a;
+}
+
+.mode-badge {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .top {

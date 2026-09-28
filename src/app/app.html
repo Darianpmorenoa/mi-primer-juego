@@ -1,5 +1,6 @@
 <main>
   <h1>Snake</h1>
+  <p class="mode-badge">Modo {{ modeName() }}</p>
 
   <div class="top">
     <!-- [input]="..." pasa valores del padre a los inputs del hijo -->
@@ -40,9 +41,11 @@
         animate.leave="screen-leave"
         [status]="game.status()"
         [score]="game.score()"
+        [mode]="game.mode()"
         [isNewRecord]="game.isNewRecord()"
         (start)="game.start()"
         (resume)="game.resume()"
+        (modeChange)="game.setMode($event)"
       />
     }
   </div>

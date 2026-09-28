@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Direction, GameStatus, Position } from './game.types';
+import { GAME_MODES } from './game-modes';
+import { Direction, GameMode, GameStatus, Position } from './game.types';
 
 /** Cuánto se mueve la cabeza en cada dirección (en celdas). */
 const MOVES: Record<Direction, Position> = {
@@ -29,8 +30,9 @@ const START_TICK_MS = 150;
 const TICK_STEP_MS = 12;
 const MIN_TICK_MS = 60;
 
-/** Clave con la que se guarda el récord en el navegador. */
-const HIGH_SCORE_KEY = 'snake-high-score';
+/** Claves con las que se guardan datos en el navegador. */
+const HIGH_SCORE_KEY = 'snake-high-score'; // + "-<modo>", uno por modo
+const MODE_KEY = 'snake-mode';
 
 /** ¿Dos posiciones son la misma celda? */
 function samePosition(a: Position, b: Position): boolean {
@@ -68,6 +70,10 @@ export class GameService {
   private readonly _status = signal<GameStatus>('ready');
   readonly status = this._status.asReadonly();
 
+  /** Modo elegido (se recuerda para la próxima visita). */
+  private readonly _mode = signal<GameMode>(this.loadMode());
+  readonly mode = this._mode.asReadonly();
+
   // computed(): un signal que se CALCULA a partir de otros.
   // No guardamos el puntaje aparte: se deduce del largo de la serpiente,
   // así nunca pueden quedar desincronizados.
@@ -81,9 +87,14 @@ export class GameService {
     Math.max(MIN_TICK_MS, START_TICK_MS - (this.level() - 1) * TICK_STEP_MS),
   );
 
-  /** Mejor puntaje histórico (se conserva al recargar la página). */
-  private readonly _highScore = signal(this.loadHighScore());
-  readonly highScore = this._highScore.asReadonly();
+  /**
+   * Récords de TODOS los modos, por ejemplo { classic: 120, portal: 80 }.
+   * Record<GameMode, number> obliga a que haya un número para cada modo.
+   */
+  private readonly _highScores = signal<Record<GameMode, number>>(this.loadHighScores());
+
+  /** Récord del modo elegido: cambia solo cuando cambia el modo o el récord. */
+  readonly highScore = computed(() => this._highScores()[this._mode()]);
 
   /** ¿La última partida batió el récord? */
   private readonly _isNewRecord = signal(false);
@@ -123,6 +134,17 @@ export class GameService {
     this.scheduleTick();
   }
 
+  /** Cambia de modo. Solo se permite fuera de una partida. */
+  setMode(mode: GameMode): void {
+    const status = this._status();
+    if (status === 'playing' || status === 'paused') return;
+
+    this._mode.set(mode);
+    // El aviso de "nuevo récord" era del modo anterior.
+    this._isNewRecord.set(false);
+    this.saveToStorage(MODE_KEY, mode);
+  }
+
   togglePause(): void {
     if (this._status() === 'playing') this.pause();
     else this.resume();
@@ -158,7 +180,16 @@ export class GameService {
     const snake = this._snake();
     const head = snake[0];
     const move = MOVES[this.direction];
-    const newHead: Position = { x: head.x + move.x, y: head.y + move.y };
+    let newHead: Position = { x: head.x + move.x, y: head.y + move.y };
+
+    // Modo "Sin paredes": al salir por un borde aparece por el contrario
+    // (el operador % "da la vuelta", como en la Fase 2).
+    if (this._mode() === 'portal') {
+      newHead = {
+        x: (newHead.x + this.cols) % this.cols,
+        y: (newHead.y + this.rows) % this.rows,
+      };
+    }
 
     const food = this._food();
     const ate = food !== null && samePosition(newHead, food);
@@ -168,6 +199,8 @@ export class GameService {
     const body = ate ? snake : snake.slice(0, -1);
 
     // Colisiones: contra un borde o contra su propio cuerpo.
+    // (En modo "Sin paredes" la cabeza nunca queda fuera, así que solo
+    // cuenta el cuerpo.)
     // Comprobamos contra "body" y no contra "snake": perseguir tu propia
     // cola justo detrás de ella es un movimiento válido.
     if (this.isOutside(newHead) || body.some((part) => samePosition(part, newHead))) {
@@ -196,10 +229,13 @@ export class GameService {
     this.stopTimer();
 
     const score = this.score();
-    if (score > this._highScore()) {
-      this._highScore.set(score);
+    const mode = this._mode();
+    if (score > this._highScores()[mode]) {
+      // Copiamos el objeto cambiando solo el modo actual: un objeto
+      // NUEVO, igual que con los arrays, para que el signal lo detecte.
+      this._highScores.update((scores) => ({ ...scores, [mode]: score }));
       this._isNewRecord.set(true);
-      this.saveHighScore(score);
+      this.saveToStorage(`${HIGH_SCORE_KEY}-${mode}`, String(score));
     }
 
     this._status.set(result);
@@ -212,22 +248,40 @@ export class GameService {
     }
   }
 
+  private loadHighScores(): Record<GameMode, number> {
+    const scores = {} as Record<GameMode, number>;
+    for (const { id } of GAME_MODES) {
+      scores[id] = Number(this.loadFromStorage(`${HIGH_SCORE_KEY}-${id}`)) || 0;
+    }
+    // Antes de existir los modos, el récord se guardaba en "snake-high-score"
+    // (sin modo). Era del modo clásico: lo recuperamos para no perderlo.
+    const legacy = Number(this.loadFromStorage(HIGH_SCORE_KEY)) || 0;
+    scores.classic = Math.max(scores.classic, legacy);
+    return scores;
+  }
+
+  private loadMode(): GameMode {
+    const saved = this.loadFromStorage(MODE_KEY);
+    // Solo aceptamos un valor guardado si es un modo que existe.
+    return GAME_MODES.find((m) => m.id === saved)?.id ?? 'classic';
+  }
+
   // localStorage guarda texto en el navegador y sobrevive a recargas.
   // Va dentro de try/catch porque puede fallar (modo incógnito estricto,
-  // almacenamiento bloqueado...); en ese caso el juego sigue sin récord guardado.
-  private loadHighScore(): number {
+  // almacenamiento bloqueado...); en ese caso el juego sigue sin guardar nada.
+  private loadFromStorage(key: string): string | null {
     try {
-      return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
+      return localStorage.getItem(key);
     } catch {
-      return 0;
+      return null;
     }
   }
 
-  private saveHighScore(score: number): void {
+  private saveToStorage(key: string, value: string): void {
     try {
-      localStorage.setItem(HIGH_SCORE_KEY, String(score));
+      localStorage.setItem(key, value);
     } catch {
-      // Sin almacenamiento: el récord solo dura hasta recargar.
+      // Sin almacenamiento: los datos solo duran hasta recargar.
     }
   }
 

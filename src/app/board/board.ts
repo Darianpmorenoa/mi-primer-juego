@@ -23,8 +23,10 @@ const COLORS = {
 @Component({
   selector: 'app-board',
   template: `
+    <!-- En modo "Sin paredes" el borde se ve punteado: se puede atravesar -->
     <canvas
       #canvas
+      [class.portal]="game.mode() === 'portal'"
       [width]="game.cols * cellSize * pixelRatio"
       [height]="game.rows * cellSize * pixelRatio"
     ></canvas>
@@ -40,6 +42,10 @@ const COLORS = {
       border: 2px solid var(--border);
       border-radius: 10px;
       box-shadow: 0 10px 40px rgb(0 0 0 / 0.4);
+    }
+    canvas.portal {
+      border-style: dashed;
+      border-color: var(--accent);
     }
   `,
 })

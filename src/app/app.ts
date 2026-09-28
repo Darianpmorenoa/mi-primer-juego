@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { BoardComponent } from './board/board';
 import { GameScreenComponent } from './game-screen/game-screen';
+import { GAME_MODES } from './game/game-modes';
 import { GameService } from './game/game.service';
 import { Direction } from './game/game.types';
 import { ScoreboardComponent } from './scoreboard/scoreboard';
@@ -46,6 +47,11 @@ export class App {
   // "protected" para poder usarlo en el template (app.html).
   protected readonly game = inject(GameService);
 
+  /** Nombre del modo actual, para mostrarlo bajo el título. */
+  protected readonly modeName = computed(
+    () => GAME_MODES.find((m) => m.id === this.game.mode())?.name ?? '',
+  );
+
   protected onKeydown(event: KeyboardEvent): void {
     const key = event.key.toLowerCase();
     const status = this.game.status();
@@ -63,6 +69,13 @@ export class App {
       } else {
         this.game.start();
       }
+      return;
+    }
+
+    // 1, 2...: elegir modo (el servicio lo ignora si hay una partida en curso).
+    const mode = GAME_MODES[Number(key) - 1];
+    if (mode) {
+      this.game.setMode(mode.id);
       return;
     }
 

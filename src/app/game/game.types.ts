@@ -24,3 +24,17 @@ export type Direction = 'up' | 'down' | 'left' | 'right';
  * - 'won':     la serpiente llenó todo el tablero
  */
 export type GameStatus = 'ready' | 'playing' | 'paused' | 'over' | 'won';
+
+/**
+ * Modos de juego:
+ * - 'classic': los bordes matan
+ * - 'portal':  sin paredes, se atraviesan los bordes
+ */
+export type GameMode = 'classic' | 'portal';
+
+/** Datos de un modo para mostrarlo en pantalla. */
+export interface GameModeInfo {
+  id: GameMode;
+  name: string;
+  description: string;
+}
