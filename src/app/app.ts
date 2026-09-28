@@ -4,6 +4,7 @@ import { GameScreenComponent } from './game-screen/game-screen';
 import { GameService } from './game/game.service';
 import { Direction } from './game/game.types';
 import { ScoreboardComponent } from './scoreboard/scoreboard';
+import { TouchControlsComponent } from './touch-controls/touch-controls';
 
 /** Qué dirección corresponde a cada tecla (flechas y WASD). */
 const KEY_TO_DIRECTION: Record<string, Direction> = {
@@ -24,13 +25,14 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
 @Component({
   selector: 'app-root',
   // Para usar un componente en el template hay que importarlo aquí.
-  imports: [BoardComponent, ScoreboardComponent, GameScreenComponent],
+  imports: [BoardComponent, ScoreboardComponent, GameScreenComponent, TouchControlsComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   // "host" escucha eventos fuera del template; con "document:" escuchamos
   // las teclas pulsadas en cualquier parte de la página.
   host: {
     '(document:keydown)': 'onKeydown($event)',
+    '(document:visibilitychange)': 'onVisibilityChange()',
   },
 })
 export class App {
@@ -39,14 +41,28 @@ export class App {
 
   protected onKeydown(event: KeyboardEvent): void {
     const key = event.key.toLowerCase();
+    const status = this.game.status();
 
-    // Enter o Espacio empiezan la partida cuando no se está jugando.
+    // Enter / Espacio: la "acción principal" según el momento.
     // Si el foco está en un botón, dejamos que el propio botón haga su
-    // (click); si no, la partida empezaría dos veces.
-    if ((key === 'enter' || key === ' ') && this.game.status() !== 'playing') {
+    // (click); si no, la acción se ejecutaría dos veces.
+    if (key === 'enter' || key === ' ') {
       if (event.target instanceof HTMLButtonElement) return;
       event.preventDefault();
-      this.game.start();
+      if (status === 'playing') {
+        if (key === ' ') this.game.pause();
+      } else if (status === 'paused') {
+        this.game.resume();
+      } else {
+        this.game.start();
+      }
+      return;
+    }
+
+    // P o Escape: pausar / continuar.
+    if (key === 'p' || key === 'escape') {
+      event.preventDefault();
+      this.game.togglePause();
       return;
     }
 
@@ -56,5 +72,10 @@ export class App {
     // Evita que las flechas hagan scroll en la página.
     event.preventDefault();
     this.game.changeDirection(direction);
+  }
+
+  /** Si el jugador cambia de pestaña o bloquea el celular, pausamos. */
+  protected onVisibilityChange(): void {
+    if (document.hidden) this.game.pause();
   }
 }

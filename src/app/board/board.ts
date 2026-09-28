@@ -16,8 +16,13 @@ import { Position } from '../game/game.types';
     ></canvas>
   `,
   styles: `
+    /* El canvas dibuja a 400x400 px internos, pero en pantalla se
+       estira o encoge al ancho disponible (así cabe en un celular). */
     canvas {
       display: block;
+      width: 100%;
+      height: auto;
+      box-sizing: border-box;
       border: 2px solid #3a3a5c;
       border-radius: 8px;
     }

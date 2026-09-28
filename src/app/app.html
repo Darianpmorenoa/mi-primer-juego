@@ -1,21 +1,43 @@
 <main>
   <h1>Snake</h1>
-  <!-- [score]="..." pasa un valor del padre al input del hijo -->
-  <app-scoreboard [score]="game.score()" />
+
+  <div class="top">
+    <!-- [input]="..." pasa valores del padre a los inputs del hijo -->
+    <app-scoreboard
+      [score]="game.score()"
+      [highScore]="game.highScore()"
+      [level]="game.level()"
+    />
+    <!-- [disabled] enlaza una propiedad HTML normal a una expresión -->
+    <button
+      type="button"
+      class="pause"
+      aria-label="Pausa"
+      [disabled]="game.status() !== 'playing'"
+      (click)="game.pause()"
+    >
+      ❚❚
+    </button>
+  </div>
 
   <div class="stage">
     <app-board />
 
     <!-- @if: la pantalla solo existe mientras NO se está jugando -->
     @if (game.status() !== 'playing') {
-      <!-- (start)="..." escucha el output del hijo -->
+      <!-- (output)="..." escucha los avisos del hijo -->
       <app-game-screen
         [status]="game.status()"
         [score]="game.score()"
+        [isNewRecord]="game.isNewRecord()"
         (start)="game.start()"
+        (resume)="game.resume()"
       />
     }
   </div>
 
-  <p class="hint">Usa las flechas o WASD para moverte</p>
+  <!-- $event es el valor que emitió el hijo (la dirección tocada) -->
+  <app-touch-controls (direction)="game.changeDirection($event)" />
+
+  <p class="hint">Flechas / WASD para moverte · P o Espacio para pausar</p>
 </main>

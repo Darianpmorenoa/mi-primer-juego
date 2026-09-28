@@ -19,7 +19,8 @@ export type Direction = 'up' | 'down' | 'left' | 'right';
  * En qué momento está la partida:
  * - 'ready':   pantalla de inicio, aún no se ha jugado
  * - 'playing': jugando
+ * - 'paused':  en pausa
  * - 'over':    Game Over (chocó)
  * - 'won':     la serpiente llenó todo el tablero
  */
-export type GameStatus = 'ready' | 'playing' | 'over' | 'won';
+export type GameStatus = 'ready' | 'playing' | 'paused' | 'over' | 'won';

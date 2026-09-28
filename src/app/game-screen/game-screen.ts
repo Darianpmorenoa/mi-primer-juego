@@ -3,11 +3,11 @@ import { GameStatus } from '../game/game.types';
 
 /**
  * GameScreenComponent: las pantallas que se ponen encima del tablero
- * (inicio, Game Over y victoria).
+ * (inicio, pausa, Game Over y victoria).
  *
  * Igual que el marcador, no inyecta el GameService:
  * - recibe datos del padre con inputs (status, score)
- * - AVISA al padre con un output (start) cuando el jugador quiere jugar.
+ * - AVISA al padre con outputs (start, resume) cuando el jugador quiere jugar.
  * Quien decide qué hacer con ese aviso es el padre.
  */
 @Component({
@@ -19,6 +19,10 @@ import { GameStatus } from '../game/game.types';
         <h2>Snake</h2>
         <p>Come la comida roja para crecer.<br />No choques con los bordes ni contigo.</p>
       }
+      @case ('paused') {
+        <h2>Pausa</h2>
+        <p>Puntaje: <strong>{{ score() }}</strong></p>
+      }
       @case ('over') {
         <h2>Game Over</h2>
         <p>Puntaje: <strong>{{ score() }}</strong></p>
@@ -29,10 +33,18 @@ import { GameStatus } from '../game/game.types';
       }
     }
 
-    <!-- (click) escucha el evento; start.emit() se lo avisa al padre -->
-    <button type="button" (click)="start.emit()">
-      {{ status() === 'ready' ? 'Jugar' : 'Jugar otra vez' }}
-    </button>
+    @if (isNewRecord()) {
+      <p class="record">¡Nuevo récord!</p>
+    }
+
+    <!-- (click) escucha el evento; .emit() se lo avisa al padre -->
+    @if (status() === 'paused') {
+      <button type="button" (click)="resume.emit()">Continuar</button>
+    } @else {
+      <button type="button" (click)="start.emit()">
+        {{ status() === 'ready' ? 'Jugar' : 'Jugar otra vez' }}
+      </button>
+    }
     <p class="hint">o pulsa Enter / Espacio</p>
   `,
   styles: `
@@ -68,6 +80,10 @@ import { GameStatus } from '../game/game.types';
       border-radius: 6px;
       cursor: pointer;
     }
+    .record {
+      color: #f9e2af;
+      font-weight: bold;
+    }
     .hint {
       font-size: 0.85rem;
       opacity: 0.6;
@@ -77,8 +93,10 @@ import { GameStatus } from '../game/game.types';
 export class GameScreenComponent {
   readonly status = input.required<GameStatus>();
   readonly score = input.required<number>();
+  readonly isNewRecord = input(false);
 
   // output(): un evento propio del componente. El padre lo escucha con
   // <app-game-screen (start)="..." />, igual que escucharía un (click).
   readonly start = output<void>();
+  readonly resume = output<void>();
 }

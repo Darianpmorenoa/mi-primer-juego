@@ -11,13 +11,54 @@ h1 {
   letter-spacing: 4px;
 }
 
+.top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.pause {
+  width: 44px;
+  height: 44px;
+  font-size: 1rem;
+  color: #cdd6f4;
+  background: #313244;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.pause:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Contenedor del tablero: "relative" para que la pantalla de
+   inicio / Game Over (position: absolute) se coloque encima.
+   Ocupa todo el ancho disponible, hasta el tamaño real del canvas. */
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 404px;
+}
+
 .hint {
   margin: 0;
   opacity: 0.7;
 }
 
-/* Contenedor del tablero: "relative" para que la pantalla de
-   inicio / Game Over (position: absolute) se coloque encima. */
-.stage {
-  position: relative;
+/* La cruceta está oculta por defecto... */
+app-touch-controls {
+  display: none;
+}
+
+/* ...y solo aparece en pantallas táctiles (sin ratón). Ahí ocultamos
+   la ayuda del teclado porque no aplica. */
+@media (hover: none) and (pointer: coarse) {
+  app-touch-controls {
+    display: grid;
+  }
+  .hint {
+    display: none;
+  }
 }

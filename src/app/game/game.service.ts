@@ -21,6 +21,16 @@ const OPPOSITE: Record<Direction, Direction> = {
 const INITIAL_LENGTH = 3;
 /** Puntos por cada comida. */
 const POINTS_PER_FOOD = 10;
+/** Cada cuántos puntos se sube de nivel (y la serpiente va más rápido). */
+const POINTS_PER_LEVEL = 50;
+
+/** Velocidad: milisegundos entre pasos en el nivel 1, cuánto baja por nivel y el mínimo. */
+const START_TICK_MS = 150;
+const TICK_STEP_MS = 12;
+const MIN_TICK_MS = 60;
+
+/** Clave con la que se guarda el récord en el navegador. */
+const HIGH_SCORE_KEY = 'snake-high-score';
 
 /** ¿Dos posiciones son la misma celda? */
 function samePosition(a: Position, b: Position): boolean {
@@ -43,9 +53,6 @@ export class GameService {
   readonly cols = 20;
   readonly rows = 20;
 
-  /** Milisegundos entre cada paso de la serpiente. */
-  private readonly tickMs = 150;
-
   // Un signal es un valor que AVISA cuando cambia: quien lo lea
   // (por ejemplo el tablero) se actualiza solo.
   // La versión con "_" es privada y se puede modificar; hacia afuera
@@ -66,12 +73,28 @@ export class GameService {
   // así nunca pueden quedar desincronizados.
   readonly score = computed(() => (this._snake().length - INITIAL_LENGTH) * POINTS_PER_FOOD);
 
+  /** Nivel actual: sube cada POINTS_PER_LEVEL puntos. */
+  readonly level = computed(() => Math.floor(this.score() / POINTS_PER_LEVEL) + 1);
+
+  /** Milisegundos entre pasos: cuanto más nivel, menos espera (más rápido). */
+  private readonly tickMs = computed(() =>
+    Math.max(MIN_TICK_MS, START_TICK_MS - (this.level() - 1) * TICK_STEP_MS),
+  );
+
+  /** Mejor puntaje histórico (se conserva al recargar la página). */
+  private readonly _highScore = signal(this.loadHighScore());
+  readonly highScore = this._highScore.asReadonly();
+
+  /** ¿La última partida batió el récord? */
+  private readonly _isNewRecord = signal(false);
+  readonly isNewRecord = this._isNewRecord.asReadonly();
+
   /** Dirección con la que se dio el último paso. */
   private direction: Direction = 'right';
   /** Dirección que se usará en el próximo paso. */
   private nextDirection: Direction = 'right';
 
-  private timerId: ReturnType<typeof setInterval> | null = null;
+  private timerId: ReturnType<typeof setTimeout> | null = null;
 
   /** Empieza una partida nueva (sirve también para "jugar otra vez"). */
   start(): void {
@@ -82,9 +105,27 @@ export class GameService {
     this._food.set(this.randomFreeCell(snake));
     this.direction = 'right';
     this.nextDirection = 'right';
+    this._isNewRecord.set(false);
     this._status.set('playing');
 
-    this.timerId = setInterval(() => this.tick(), this.tickMs);
+    this.scheduleTick();
+  }
+
+  pause(): void {
+    if (this._status() !== 'playing') return;
+    this.stopTimer();
+    this._status.set('paused');
+  }
+
+  resume(): void {
+    if (this._status() !== 'paused') return;
+    this._status.set('playing');
+    this.scheduleTick();
+  }
+
+  togglePause(): void {
+    if (this._status() === 'playing') this.pause();
+    else this.resume();
   }
 
   /** Lo llaman los componentes cuando el jugador pulsa una dirección. */
@@ -96,6 +137,19 @@ export class GameService {
     // podría girar 180° dentro del mismo paso.
     if (newDirection === OPPOSITE[this.direction]) return;
     this.nextDirection = newDirection;
+  }
+
+  /**
+   * Programa el siguiente paso. Usamos setTimeout (un solo aviso) en vez de
+   * setInterval (aviso fijo repetido) porque la espera cambia con el nivel:
+   * cada paso vuelve a mirar tickMs() y programa el siguiente.
+   */
+  private scheduleTick(): void {
+    this.timerId = setTimeout(() => {
+      this.timerId = null;
+      this.tick();
+      if (this._status() === 'playing') this.scheduleTick();
+    }, this.tickMs());
   }
 
   /** Un paso del juego: la serpiente avanza una celda. */
@@ -140,13 +194,40 @@ export class GameService {
 
   private endGame(result: 'over' | 'won'): void {
     this.stopTimer();
+
+    const score = this.score();
+    if (score > this._highScore()) {
+      this._highScore.set(score);
+      this._isNewRecord.set(true);
+      this.saveHighScore(score);
+    }
+
     this._status.set(result);
   }
 
   private stopTimer(): void {
     if (this.timerId !== null) {
-      clearInterval(this.timerId);
+      clearTimeout(this.timerId);
       this.timerId = null;
+    }
+  }
+
+  // localStorage guarda texto en el navegador y sobrevive a recargas.
+  // Va dentro de try/catch porque puede fallar (modo incógnito estricto,
+  // almacenamiento bloqueado...); en ese caso el juego sigue sin récord guardado.
+  private loadHighScore(): number {
+    try {
+      return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private saveHighScore(score: number): void {
+    try {
+      localStorage.setItem(HIGH_SCORE_KEY, String(score));
+    } catch {
+      // Sin almacenamiento: el récord solo dura hasta recargar.
     }
   }
 
