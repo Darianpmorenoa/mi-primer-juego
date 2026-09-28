@@ -20,13 +20,18 @@
     </button>
   </div>
 
-  <div class="stage">
+  <!-- [class.shake]: añade la clase "shake" solo mientras la condición sea true -->
+  <div class="stage" [class.shake]="game.status() === 'over'">
     <app-board />
 
     <!-- @if: la pantalla solo existe mientras NO se está jugando -->
     @if (game.status() !== 'playing') {
-      <!-- (output)="..." escucha los avisos del hijo -->
+      <!-- (output)="..." escucha los avisos del hijo.
+           animate.enter / animate.leave: Angular pone esas clases CSS
+           cuando el elemento aparece y cuando va a desaparecer. -->
       <app-game-screen
+        animate.enter="screen-enter"
+        animate.leave="screen-leave"
         [status]="game.status()"
         [score]="game.score()"
         [isNewRecord]="game.isNewRecord()"

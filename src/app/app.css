@@ -8,7 +8,13 @@ main {
 
 h1 {
   margin: 0;
+  font-family: var(--font-retro);
+  font-size: 2rem;
   letter-spacing: 4px;
+  color: var(--accent);
+  text-shadow:
+    0 0 16px rgb(166 227 161 / 0.5),
+    3px 3px 0 #2f7a3a;
 }
 
 .top {
@@ -21,11 +27,16 @@ h1 {
   width: 44px;
   height: 44px;
   font-size: 1rem;
-  color: #cdd6f4;
-  background: #313244;
+  color: var(--text);
+  background: var(--control);
   border: none;
   border-radius: 50%;
   cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pause:hover:not(:disabled) {
+  background: var(--control-hover);
 }
 
 .pause:disabled {
@@ -44,7 +55,40 @@ h1 {
 
 .hint {
   margin: 0;
-  opacity: 0.7;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Temblor del tablero al chocar */
+.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+
+/* Fundido de las pantallas de inicio / pausa / Game Over */
+.screen-enter {
+  animation: fade-in 0.25s ease-out;
+}
+
+.screen-leave {
+  animation: fade-out 0.15s ease-in forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 /* La cruceta está oculta por defecto... */

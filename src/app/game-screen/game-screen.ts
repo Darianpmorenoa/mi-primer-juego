@@ -60,33 +60,57 @@ import { GameStatus } from '../game/game.types';
       gap: 12px;
       padding: 16px;
       text-align: center;
-      background: rgba(17, 17, 27, 0.85);
-      border-radius: 8px;
+      line-height: 1.5;
+      background: rgb(17 17 27 / 0.8);
+      /* Desenfoca el tablero que queda detrás */
+      backdrop-filter: blur(3px);
+      border-radius: 10px;
     }
     h2 {
-      margin: 0;
-      font-size: 2rem;
+      margin: 0 0 4px;
+      font-family: var(--font-retro);
+      font-size: 1.4rem;
+      color: var(--accent);
+      text-shadow: 0 0 12px rgb(166 227 161 / 0.5);
     }
     p {
       margin: 0;
     }
+    strong {
+      color: var(--accent);
+    }
     button {
-      padding: 10px 28px;
-      font-size: 1.1rem;
+      margin-top: 8px;
+      padding: 12px 28px;
+      font-size: 1rem;
       font-weight: bold;
-      color: #11111b;
-      background: #a6e3a1;
+      color: var(--bg);
+      background: var(--accent);
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgb(166 227 161 / 0.4);
+    }
+    button:active {
+      transform: translateY(0);
     }
     .record {
-      color: #f9e2af;
-      font-weight: bold;
+      font-family: var(--font-retro);
+      font-size: 0.75rem;
+      color: var(--gold);
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.1); }
     }
     .hint {
-      font-size: 0.85rem;
-      opacity: 0.6;
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
   `,
 })

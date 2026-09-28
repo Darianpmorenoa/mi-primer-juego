@@ -31,8 +31,8 @@ import { Direction } from '../game/game.types';
 
     button {
       font-size: 1.4rem;
-      color: #cdd6f4;
-      background: #313244;
+      color: var(--text);
+      background: var(--control);
       border: none;
       border-radius: 12px;
       /* Evita el zoom por doble toque y la selección de texto */
@@ -40,7 +40,7 @@ import { Direction } from '../game/game.types';
       user-select: none;
     }
     button:active {
-      background: #45475a;
+      background: var(--control-hover);
     }
   `,
 })

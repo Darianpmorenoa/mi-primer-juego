@@ -27,22 +27,25 @@ import { Component, input } from '@angular/core';
   styles: `
     :host {
       display: flex;
-      gap: 24px;
+      gap: 20px;
     }
     .stat {
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 6px;
+      min-width: 64px;
     }
     .label {
       text-transform: uppercase;
-      font-size: 0.75rem;
-      opacity: 0.7;
+      letter-spacing: 1px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
     }
     .value {
-      font-size: 1.5rem;
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
+      font-family: var(--font-retro);
+      font-size: 1rem;
+      color: var(--accent);
     }
   `,
 })

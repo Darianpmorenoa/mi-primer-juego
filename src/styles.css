@@ -1,8 +1,39 @@
 /* Estilos globales (afectan a toda la página) */
+
+/* Paleta del juego como variables CSS. Se definen una vez aquí y
+   cualquier componente las usa con var(--nombre). Cambiar un color
+   aquí lo cambia en todo el juego. */
+:root {
+  --bg: #11111b;
+  --surface: #1e1e2e;
+  --surface-alt: #232336;
+  --control: #313244;
+  --control-hover: #45475a;
+  --border: #3a3a5c;
+  --text: #cdd6f4;
+  --text-muted: #9399b2;
+  --accent: #a6e3a1;
+  --danger: #f38ba8;
+  --gold: #f9e2af;
+
+  --font-retro: 'Press Start 2P', monospace;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background: #11111b;
-  color: #cdd6f4;
-  font-family: system-ui, sans-serif;
+  background: radial-gradient(circle at 50% 0%, #1e1e2e 0%, var(--bg) 60%);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+/* Si el usuario pidió al sistema "reducir movimiento", apagamos animaciones. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
