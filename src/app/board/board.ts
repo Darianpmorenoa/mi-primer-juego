@@ -36,11 +36,11 @@ export class BoardComponent {
   constructor() {
     // afterRenderEffect: ejecuta la función cuando el canvas ya existe
     // y la VUELVE a ejecutar cada vez que cambia un signal que lea dentro
-    // (aquí, game.snake()). Así el tablero se redibuja solo.
-    afterRenderEffect(() => this.draw(this.game.snake()));
+    // (aquí, game.snake() y game.food()). Así el tablero se redibuja solo.
+    afterRenderEffect(() => this.draw(this.game.snake(), this.game.food()));
   }
 
-  private draw(snake: readonly Position[]): void {
+  private draw(snake: readonly Position[], food: Position | null): void {
     const ctx = this.canvas().nativeElement.getContext('2d')!;
     const size = this.cellSize;
 
@@ -61,6 +61,14 @@ export class BoardComponent {
       ctx.moveTo(0, y * size);
       ctx.lineTo(this.game.cols * size, y * size);
       ctx.stroke();
+    }
+
+    // Comida: un círculo rojo en el centro de su celda
+    if (food) {
+      ctx.fillStyle = '#f38ba8';
+      ctx.beginPath();
+      ctx.arc((food.x + 0.5) * size, (food.y + 0.5) * size, size / 2 - 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Serpiente: la cabeza (índice 0) más clara que el cuerpo

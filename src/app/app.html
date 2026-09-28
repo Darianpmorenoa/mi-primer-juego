@@ -1,5 +1,7 @@
 <main>
   <h1>Snake</h1>
+  <!-- [score]="..." pasa un valor del padre al input del hijo -->
+  <app-scoreboard [score]="game.score()" />
   <app-board />
   <p class="hint">Usa las flechas o WASD para moverte</p>
 </main>

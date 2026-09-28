@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { BoardComponent } from './board/board';
 import { GameService } from './game/game.service';
+import { ScoreboardComponent } from './scoreboard/scoreboard';
 import { Direction } from './game/game.types';
 
 /** Qué dirección corresponde a cada tecla (flechas y WASD). */
@@ -21,8 +22,8 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
  */
 @Component({
   selector: 'app-root',
-  // Para usar <app-board> en el template hay que importarlo aquí.
-  imports: [BoardComponent],
+  // Para usar <app-board> y <app-scoreboard> en el template hay que importarlos aquí.
+  imports: [BoardComponent, ScoreboardComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   // "host" escucha eventos fuera del template; con "document:" escuchamos
@@ -32,7 +33,8 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
   },
 })
 export class App {
-  private readonly game = inject(GameService);
+  // "protected" para poder usarlo en el template (app.html).
+  protected readonly game = inject(GameService);
 
   protected onKeydown(event: KeyboardEvent): void {
     const direction = KEY_TO_DIRECTION[event.key.toLowerCase()];
