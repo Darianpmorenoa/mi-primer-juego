@@ -1,59 +1,79 @@
-# SnakeGame
+# 🐍 Snake en Angular
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.14.
+El clásico juego de la serpiente, hecho con **Angular 21** para aprender cómo se organiza una aplicación Angular: servicios, componentes, signals, inputs y outputs.
 
-## Development server
+**▶ Jugar ahora:** https://darianpmorenoa.github.io/mi-primer-juego/
 
-To start a local development server, run:
+## Cómo jugar
 
-```bash
-ng serve
+Come la comida roja para crecer y sumar puntos. Si chocas con un borde o contigo mismo, pierdes.
+
+| Acción | Teclado | Celular |
+|---|---|---|
+| Moverse | Flechas o <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Cruceta en pantalla |
+| Empezar / jugar otra vez | <kbd>Enter</kbd> o <kbd>Espacio</kbd> | Botón **Jugar** |
+| Pausar / continuar | <kbd>P</kbd>, <kbd>Esc</kbd> o <kbd>Espacio</kbd> | Botón **❚❚** |
+
+- Cada comida vale **10 puntos**.
+- Cada **50 puntos** subes de nivel y la serpiente va más rápido.
+- El **récord** se guarda en tu navegador y se conserva al recargar.
+- Si cambias de pestaña, la partida se pausa sola.
+
+## Cómo está organizado
+
+La idea principal: **la lógica vive en un servicio y los componentes solo muestran datos o avisan de lo que hace el jugador.**
+
+```
+src/app/
+├── game/
+│   ├── game.types.ts        Tipos: Position, Direction, GameStatus
+│   └── game.service.ts      GameService: TODAS las reglas del juego
+├── board/board.ts           Dibuja el tablero en un <canvas>
+├── scoreboard/scoreboard.ts Muestra puntos, récord y nivel
+├── game-screen/game-screen.ts  Pantallas de inicio, pausa, Game Over y victoria
+├── touch-controls/touch-controls.ts  Cruceta para celular
+└── app.ts / app.html        Componente raíz: junta las piezas y escucha el teclado
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+| Pieza | Responsabilidad | Cómo se comunica |
+|---|---|---|
+| `GameService` | Movimiento, colisiones, comida, puntaje, niveles, pausa y récord | Expone *signals* de solo lectura y métodos (`start()`, `changeDirection()`...) |
+| `BoardComponent` | Dibujar en el canvas | Inyecta el servicio y lee sus signals |
+| `ScoreboardComponent` | Mostrar puntos, récord y nivel | Recibe datos por **inputs** |
+| `GameScreenComponent` | Pantallas sobre el tablero | **Inputs** para los datos y **outputs** (`start`, `resume`) para avisar |
+| `TouchControlsComponent` | Cruceta táctil | **Output** (`direction`) |
+| `App` | Organizar la pantalla y traducir el teclado en órdenes | Conecta los componentes con el servicio |
 
-## Code scaffolding
+## Conceptos de Angular que se usan
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- **Componentes standalone:** cada pieza de la pantalla es una clase con `@Component` que importa lo que usa.
+- **Servicios e inyección de dependencias:** `@Injectable({ providedIn: 'root' })` crea una única instancia compartida, que se pide con `inject()`.
+- **Signals:** `signal()` guarda un valor que avisa cuando cambia; `computed()` calcula valores a partir de otros (el puntaje sale del largo de la serpiente y el nivel sale del puntaje).
+- **Inputs y outputs:** los datos bajan del padre al hijo con `[input]` y los eventos suben del hijo al padre con `(output)`.
+- **Control de flujo en templates:** `@if` y `@switch`.
+- **Enlaces de clase y animaciones:** `[class.shake]`, `animate.enter` y `animate.leave`.
+- **`afterRenderEffect()`:** vuelve a dibujar el canvas cuando cambian los signals que lee.
+- **Zoneless:** la pantalla se actualiza porque cambian los signals, sin zone.js.
 
-```bash
-ng generate component component-name
-```
+El juego se construyó en 6 fases, cada una en su propio commit. Puedes recorrerlas en el [historial de commits](https://github.com/Darianpmorenoa/mi-primer-juego/commits/main).
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Ejecutarlo en tu computador
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Necesitas **Node.js** en una de estas versiones: 20.19 o superior dentro de la 20, 22.12 o superior dentro de la 22, o la 24 en adelante.
 
 ```bash
-ng test
+git clone https://github.com/Darianpmorenoa/mi-primer-juego.git
+cd mi-primer-juego
+npm install
+npx ng serve
 ```
 
-## Running end-to-end tests
+Abre http://localhost:4200. La página se recarga sola al guardar cambios.
 
-For end-to-end (e2e) testing, run:
+> El archivo `.npmrc` activa `legacy-peer-deps` para evitar un error de npm 10.9 al instalar las dependencias de pruebas.
 
-```bash
-ng e2e
-```
+**Probarlo en el celular** (misma red WiFi): ejecuta `npx ng serve --host 0.0.0.0` y abre `http://<IP-de-tu-PC>:4200` en el celular. La IP la ves con `ipconfig` (Windows) o `ifconfig` (Mac/Linux).
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Publicación
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Cada `git push` a `main` ejecuta el workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), que compila el juego y lo publica en **GitHub Pages** automáticamente.
