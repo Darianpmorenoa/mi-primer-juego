@@ -4,6 +4,7 @@ import { GameScreenComponent } from './game-screen/game-screen';
 import { GameService } from './game/game.service';
 import { Direction } from './game/game.types';
 import { ScoreboardComponent } from './scoreboard/scoreboard';
+import { SwipeDirective } from './swipe/swipe.directive';
 import { TouchControlsComponent } from './touch-controls/touch-controls';
 
 /** Qué dirección corresponde a cada tecla (flechas y WASD). */
@@ -24,8 +25,14 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
  */
 @Component({
   selector: 'app-root',
-  // Para usar un componente en el template hay que importarlo aquí.
-  imports: [BoardComponent, ScoreboardComponent, GameScreenComponent, TouchControlsComponent],
+  // Para usar un componente o directiva en el template hay que importarlo aquí.
+  imports: [
+    BoardComponent,
+    ScoreboardComponent,
+    GameScreenComponent,
+    TouchControlsComponent,
+    SwipeDirective,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
   // "host" escucha eventos fuera del template; con "document:" escuchamos

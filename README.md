@@ -10,7 +10,7 @@ Come la comida roja para crecer y sumar puntos. Si chocas con un borde o contigo
 
 | Acción | Teclado | Celular |
 |---|---|---|
-| Moverse | Flechas o <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Cruceta en pantalla |
+| Moverse | Flechas o <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Deslizar el dedo sobre el tablero o usar la cruceta |
 | Empezar / jugar otra vez | <kbd>Enter</kbd> o <kbd>Espacio</kbd> | Botón **Jugar** |
 | Pausar / continuar | <kbd>P</kbd>, <kbd>Esc</kbd> o <kbd>Espacio</kbd> | Botón **❚❚** |
 
@@ -32,6 +32,7 @@ src/app/
 ├── scoreboard/scoreboard.ts Muestra puntos, récord y nivel
 ├── game-screen/game-screen.ts  Pantallas de inicio, pausa, Game Over y victoria
 ├── touch-controls/touch-controls.ts  Cruceta para celular
+├── swipe/swipe.directive.ts  Directiva: detecta deslizamientos del dedo
 └── app.ts / app.html        Componente raíz: junta las piezas y escucha el teclado
 ```
 
@@ -42,6 +43,7 @@ src/app/
 | `ScoreboardComponent` | Mostrar puntos, récord y nivel | Recibe datos por **inputs** |
 | `GameScreenComponent` | Pantallas sobre el tablero | **Inputs** para los datos y **outputs** (`start`, `resume`) para avisar |
 | `TouchControlsComponent` | Cruceta táctil | **Output** (`direction`) |
+| `SwipeDirective` | Detectar deslizamientos sobre el tablero | **Output** (`swipe`) |
 | `App` | Organizar la pantalla y traducir el teclado en órdenes | Conecta los componentes con el servicio |
 
 ## Conceptos de Angular que se usan
@@ -49,6 +51,7 @@ src/app/
 - **Componentes standalone:** cada pieza de la pantalla es una clase con `@Component` que importa lo que usa.
 - **Servicios e inyección de dependencias:** `@Injectable({ providedIn: 'root' })` crea una única instancia compartida, que se pide con `inject()`.
 - **Signals:** `signal()` guarda un valor que avisa cuando cambia; `computed()` calcula valores a partir de otros (el puntaje sale del largo de la serpiente y el nivel sale del puntaje).
+- **Directivas:** `appSwipe` añade comportamiento (detectar deslizamientos) a un elemento existente, sin template propio.
 - **Inputs y outputs:** los datos bajan del padre al hijo con `[input]` y los eventos suben del hijo al padre con `(output)`.
 - **Control de flujo en templates:** `@if` y `@switch`.
 - **Enlaces de clase y animaciones:** `[class.shake]`, `animate.enter` y `animate.leave`.

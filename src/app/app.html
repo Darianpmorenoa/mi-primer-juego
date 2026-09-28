@@ -20,8 +20,14 @@
     </button>
   </div>
 
-  <!-- [class.shake]: añade la clase "shake" solo mientras la condición sea true -->
-  <div class="stage" [class.shake]="game.status() === 'over'">
+  <!-- [class.shake]: añade la clase "shake" solo mientras la condición sea true.
+       appSwipe: directiva que detecta deslizamientos del dedo sobre el tablero. -->
+  <div
+    class="stage"
+    [class.shake]="game.status() === 'over'"
+    appSwipe
+    (swipe)="game.changeDirection($event)"
+  >
     <app-board />
 
     <!-- @if: la pantalla solo existe mientras NO se está jugando -->
