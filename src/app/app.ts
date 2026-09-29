@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { BoardComponent } from './board/board';
-import { GameScreenComponent } from './game-screen/game-screen';
+import { GameScreenComponent, ScoreFormState } from './game-screen/game-screen';
 import { GAME_MODES } from './game/game-modes';
 import { GameService } from './game/game.service';
 import { Direction } from './game/game.types';
@@ -62,16 +62,49 @@ export class App {
     () => GAME_MODES.find((m) => m.id === this.game.mode())?.name ?? '',
   );
 
+  /**
+   * Qué mostrar sobre el envío del récord en la pantalla de Game Over.
+   * Combina el resultado de la partida (GameService) con la tabla y el
+   * envío (LeaderboardService).
+   */
+  protected readonly scoreForm = computed<ScoreFormState>(() => {
+    const result = this.game.lastResult();
+    if (!result) return 'hidden';
+    // Ya se está enviando, se envió o falló: eso manda sobre lo demás.
+    const submit = this.leaderboard.submitStatus();
+    if (submit !== 'idle') return submit;
+    return this.leaderboard.qualifies(result.mode, result.score) ? 'form' : 'hidden';
+  });
+
   constructor() {
     // effect(): se ejecuta ahora y cada vez que cambie un signal que lea.
-    // Aquí lee showLeaderboard() y game.mode(), así que al abrir la tabla
-    // o al cambiar de modo con ella abierta, se pide el top a Supabase.
+    // Aquí lee showLeaderboard(), game.status() y game.mode(). Pedimos el
+    // top a Supabase al abrir la tabla, al terminar una partida (para saber
+    // si el puntaje entra) y al cambiar de modo en esos momentos.
     effect(() => {
-      if (this.showLeaderboard()) this.leaderboard.load(this.game.mode());
+      const status = this.game.status();
+      const needsTop = this.showLeaderboard() || status === 'over' || status === 'won';
+      if (needsTop) this.leaderboard.load(this.game.mode());
     });
   }
 
+  /** Empieza una partida nueva, olvidando el envío de la anterior. */
+  protected startGame(): void {
+    this.leaderboard.resetSubmit();
+    this.game.start();
+  }
+
+  /** El jugador escribió su nombre en Game Over: enviamos su resultado. */
+  protected submitScore(name: string): void {
+    const result = this.game.lastResult();
+    if (result) this.leaderboard.submit(name, result.mode, result.score);
+  }
+
   protected onKeydown(event: KeyboardEvent): void {
+    // Si se está escribiendo en un campo de texto (el nombre), las teclas
+    // son letras, no órdenes: "w" no mueve, "1" no cambia de modo...
+    if (event.target instanceof HTMLInputElement) return;
+
     const key = event.key.toLowerCase();
     const status = this.game.status();
 
@@ -96,7 +129,7 @@ export class App {
       } else if (status === 'paused') {
         this.game.resume();
       } else {
-        this.game.start();
+        this.startGame();
       }
       return;
     }

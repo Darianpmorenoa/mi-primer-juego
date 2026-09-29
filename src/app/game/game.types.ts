@@ -33,6 +33,12 @@ export type GameStatus = 'ready' | 'playing' | 'paused' | 'over' | 'won';
  */
 export type GameMode = 'classic' | 'portal' | 'obstacles';
 
+/** Resultado de una partida terminada: en qué modo y con cuántos puntos. */
+export interface GameResult {
+  mode: GameMode;
+  score: number;
+}
+
 /** Datos de un modo para mostrarlo en pantalla. */
 export interface GameModeInfo {
   id: GameMode;

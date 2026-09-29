@@ -55,10 +55,13 @@
         [score]="game.score()"
         [mode]="game.mode()"
         [isNewRecord]="game.isNewRecord()"
-        (start)="game.start()"
+        [scoreForm]="scoreForm()"
+        [playerName]="leaderboard.playerName()"
+        (start)="startGame()"
         (resume)="game.resume()"
         (modeChange)="game.setMode($event)"
         (showLeaderboard)="showLeaderboard.set(true)"
+        (submitScore)="submitScore($event)"
       />
     }
   </div>

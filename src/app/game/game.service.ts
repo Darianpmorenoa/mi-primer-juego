@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { GAME_MODES } from './game-modes';
-import { Direction, GameMode, GameStatus, Position } from './game.types';
+import { Direction, GameMode, GameResult, GameStatus, Position } from './game.types';
 import { OBSTACLES } from './obstacles';
 
 /** Cuánto se mueve la cabeza en cada dirección (en celdas). */
@@ -109,6 +109,14 @@ export class GameService {
   private readonly _isNewRecord = signal(false);
   readonly isNewRecord = this._isNewRecord.asReadonly();
 
+  /**
+   * Resultado de la partida que acaba de terminar (para enviarlo a la tabla
+   * de récords). Es null mientras se juega, al cambiar de modo o si se
+   * terminó con 0 puntos.
+   */
+  private readonly _lastResult = signal<GameResult | null>(null);
+  readonly lastResult = this._lastResult.asReadonly();
+
   /** Dirección con la que se dio el último paso. */
   private direction: Direction = 'right';
   /** Dirección que se usará en el próximo paso. */
@@ -126,6 +134,7 @@ export class GameService {
     this.direction = 'right';
     this.nextDirection = 'right';
     this._isNewRecord.set(false);
+    this._lastResult.set(null);
     this._status.set('playing');
 
     this.scheduleTick();
@@ -151,6 +160,8 @@ export class GameService {
     this._mode.set(mode);
     // El aviso de "nuevo récord" era del modo anterior.
     this._isNewRecord.set(false);
+    // El resultado era de otro modo: ya no se puede enviar como de este.
+    this._lastResult.set(null);
     // En la pantalla de inicio, recolocamos la comida por si quedó
     // encima de un obstáculo del modo nuevo.
     if (status === 'ready') this._food.set(this.randomFreeCell(this._snake()));
@@ -252,6 +263,7 @@ export class GameService {
       this.saveToStorage(`${HIGH_SCORE_KEY}-${mode}`, String(score));
     }
 
+    if (score > 0) this._lastResult.set({ mode, score });
     this._status.set(result);
   }
 

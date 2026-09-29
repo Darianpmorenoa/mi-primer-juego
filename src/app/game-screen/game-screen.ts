@@ -3,12 +3,22 @@ import { GAME_MODES } from '../game/game-modes';
 import { GameMode, GameStatus } from '../game/game.types';
 
 /**
+ * Qué se muestra sobre el envío a la tabla de récords:
+ * - 'hidden':  nada (no entró al top, o no terminó ninguna partida)
+ * - 'form':    el campo para escribir el nombre
+ * - 'sending' / 'error': el formulario, enviando o con aviso de error
+ * - 'sent':    confirmación de que se guardó
+ */
+export type ScoreFormState = 'hidden' | 'form' | 'sending' | 'sent' | 'error';
+
+/**
  * GameScreenComponent: las pantallas que se ponen encima del tablero
  * (inicio, pausa, Game Over y victoria), con el selector de modo.
  *
  * Igual que el marcador, no inyecta el GameService:
  * - recibe datos del padre con inputs (status, score, mode...)
- * - AVISA al padre con outputs (start, resume, modeChange, showLeaderboard).
+ * - AVISA al padre con outputs (start, resume, modeChange, showLeaderboard,
+ *   submitScore).
  * Quien decide qué hacer con esos avisos es el padre.
  */
 @Component({
@@ -38,8 +48,39 @@ import { GameMode, GameStatus } from '../game/game.types';
       <p class="record">¡Nuevo récord!</p>
     }
 
-    <!-- En pausa no se puede cambiar de modo (la partida sigue viva) -->
-    @if (status() !== 'paused') {
+    @if (showForm()) {
+      <!-- (submit) salta al pulsar "Guardar" o Enter dentro del campo.
+           #nameInput es una "variable de plantilla": da acceso al <input>
+           desde otras partes del template (aquí, para leer su valor). -->
+      <form class="submit-score" (submit)="onSubmit($event, nameInput.value)">
+        <p class="top-message">¡Entraste al top 10!</p>
+        <div class="row">
+          <input
+            #nameInput
+            name="name"
+            maxlength="12"
+            placeholder="Tu nombre"
+            aria-label="Tu nombre para la tabla de récords"
+            autocomplete="nickname"
+            [value]="playerName()"
+            [disabled]="scoreForm() === 'sending'"
+          />
+          <button type="submit" class="save" [disabled]="scoreForm() === 'sending'">
+            {{ scoreForm() === 'sending' ? '…' : 'Guardar' }}
+          </button>
+        </div>
+        @if (scoreForm() === 'error') {
+          <p class="error">No se pudo guardar. Inténtalo otra vez.</p>
+        }
+      </form>
+    } @else if (scoreForm() === 'sent') {
+      <p class="saved">✔ Guardado en la tabla de récords</p>
+    }
+
+    <!-- En pausa no se puede cambiar de modo (la partida sigue viva).
+         Mientras se escribe el nombre lo ocultamos: cambiar de modo
+         descartaría este puntaje, y además así cabe todo en el celular. -->
+    @if (status() !== 'paused' && !showForm()) {
       <div class="modes" role="radiogroup" aria-label="Modo de juego">
         <!-- @for repite el bloque por cada modo de la lista.
              "track m.id" le dice a Angular cómo identificar cada elemento. -->
@@ -163,6 +204,55 @@ import { GameMode, GameStatus } from '../game/game.types';
     .secondary:hover {
       background: var(--control-hover);
     }
+    .submit-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .top-message {
+      font-weight: bold;
+      color: var(--gold);
+    }
+    .row {
+      display: flex;
+      gap: 6px;
+    }
+    input {
+      width: 9.5em;
+      padding: 7px 10px;
+      font: inherit;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .save {
+      padding: 7px 14px;
+      font-weight: bold;
+      color: var(--bg);
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .save:disabled,
+    input:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .error {
+      font-size: 0.8rem;
+      color: var(--danger);
+    }
+    .saved {
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
     .record {
       font-family: var(--font-retro);
       font-size: 0.75rem;
@@ -190,6 +280,8 @@ export class GameScreenComponent {
   readonly score = input.required<number>();
   readonly mode = input.required<GameMode>();
   readonly isNewRecord = input(false);
+  readonly scoreForm = input<ScoreFormState>('hidden');
+  readonly playerName = input('');
 
   // output(): un evento propio del componente. El padre lo escucha con
   // <app-game-screen (start)="..." />, igual que escucharía un (click).
@@ -197,6 +289,8 @@ export class GameScreenComponent {
   readonly resume = output<void>();
   readonly modeChange = output<GameMode>();
   readonly showLeaderboard = output<void>();
+  /** Avisa con el nombre escrito (ya sin espacios en los bordes). */
+  readonly submitScore = output<string>();
 
   protected readonly modes = GAME_MODES;
 
@@ -205,7 +299,20 @@ export class GameScreenComponent {
     () => GAME_MODES.find((m) => m.id === this.mode()) ?? GAME_MODES[0],
   );
 
+  /** ¿Se ve el formulario del nombre? (también mientras envía o si falló) */
+  protected readonly showForm = computed(() => {
+    const state = this.scoreForm();
+    return state === 'form' || state === 'sending' || state === 'error';
+  });
+
   private readonly playButton = viewChild<ElementRef<HTMLButtonElement>>('playButton');
+
+  protected onSubmit(event: SubmitEvent, name: string): void {
+    // Sin esto, el navegador "enviaría" el formulario recargando la página.
+    event.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed) this.submitScore.emit(trimmed);
+  }
 
   protected selectMode(mode: GameMode): void {
     this.modeChange.emit(mode);
