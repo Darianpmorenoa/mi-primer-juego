@@ -23,12 +23,16 @@ const OPPOSITE: Record<Direction, Direction> = {
 const INITIAL_LENGTH = 3;
 /** Puntos por cada comida. */
 const POINTS_PER_FOOD = 10;
-/** Cada cuántos puntos se sube de nivel (y la serpiente va más rápido). */
+/** Cada cuántos puntos se sube de nivel (el número que se ve en el marcador). */
 const POINTS_PER_LEVEL = 50;
 
-/** Velocidad: milisegundos entre pasos en el nivel 1, cuánto baja por nivel y el mínimo. */
-const START_TICK_MS = 150;
-const TICK_STEP_MS = 12;
+/**
+ * Velocidad: milisegundos entre pasos al empezar, cuánto baja con CADA comida
+ * y el mínimo. Empieza tranquila y acelera poco a poco:
+ * 200 ms → 196 → 192... hasta 60 ms (a los 350 puntos).
+ */
+const START_TICK_MS = 200;
+const TICK_STEP_MS = 4;
 const MIN_TICK_MS = 60;
 
 /** Claves con las que se guardan datos en el navegador. */
@@ -91,10 +95,11 @@ export class GameService {
   /** Nivel actual: sube cada POINTS_PER_LEVEL puntos. */
   readonly level = computed(() => Math.floor(this.score() / POINTS_PER_LEVEL) + 1);
 
-  /** Milisegundos entre pasos: cuanto más nivel, menos espera (más rápido). */
-  private readonly tickMs = computed(() =>
-    Math.max(MIN_TICK_MS, START_TICK_MS - (this.level() - 1) * TICK_STEP_MS),
-  );
+  /** Milisegundos entre pasos: cada comida acorta la espera (más rápido). */
+  private readonly tickMs = computed(() => {
+    const foodEaten = this.score() / POINTS_PER_FOOD;
+    return Math.max(MIN_TICK_MS, START_TICK_MS - foodEaten * TICK_STEP_MS);
+  });
 
   /**
    * Récords de TODOS los modos, por ejemplo { classic: 120, portal: 80 }.
