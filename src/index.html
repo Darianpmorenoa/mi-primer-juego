@@ -30,8 +30,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- PWA: el "manifest" describe el juego como app instalable (nombre,
+       iconos, colores). El iPhone prefiere su propia etiqueta para el icono. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 </head>
 <body>
   <app-root></app-root>
+  <noscript>Para jugar necesitas activar JavaScript.</noscript>
 </body>
 </html>

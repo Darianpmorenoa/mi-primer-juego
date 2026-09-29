@@ -9,6 +9,7 @@ import { LeaderboardService } from './leaderboard/leaderboard.service';
 import { ScoreboardComponent } from './scoreboard/scoreboard';
 import { SwipeDirective } from './swipe/swipe.directive';
 import { TouchControlsComponent } from './touch-controls/touch-controls';
+import { UpdateBannerComponent } from './update-banner/update-banner';
 
 /** Qué dirección corresponde a cada tecla (flechas y WASD). */
 const KEY_TO_DIRECTION: Record<string, Direction> = {
@@ -36,6 +37,7 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
     LeaderboardComponent,
     TouchControlsComponent,
     SwipeDirective,
+    UpdateBannerComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
