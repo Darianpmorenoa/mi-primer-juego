@@ -46,6 +46,8 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
   host: {
     '(document:keydown)': 'onKeydown($event)',
     '(document:visibilitychange)': 'onVisibilityChange()',
+    // El navegador avisa con "online" cuando vuelve la conexión.
+    '(window:online)': 'leaderboard.reconnect()',
   },
 })
 export class App {

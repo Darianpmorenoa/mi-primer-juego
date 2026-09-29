@@ -8,8 +8,9 @@ import { GameMode, GameStatus } from '../game/game.types';
  * - 'form':    el campo para escribir el nombre
  * - 'sending' / 'error': el formulario, enviando o con aviso de error
  * - 'sent':    confirmación de que se guardó
+ * - 'queued':  no había conexión; se enviará cuando vuelva
  */
-export type ScoreFormState = 'hidden' | 'form' | 'sending' | 'sent' | 'error';
+export type ScoreFormState = 'hidden' | 'form' | 'sending' | 'sent' | 'queued' | 'error';
 
 /**
  * GameScreenComponent: las pantallas que se ponen encima del tablero
@@ -75,6 +76,8 @@ export type ScoreFormState = 'hidden' | 'form' | 'sending' | 'sent' | 'error';
       </form>
     } @else if (scoreForm() === 'sent') {
       <p class="saved">✔ Guardado en la tabla de récords</p>
+    } @else if (scoreForm() === 'queued') {
+      <p class="queued">Sin conexión: tu récord se enviará<br />solo cuando vuelva internet.</p>
     }
 
     <!-- En pausa no se puede cambiar de modo (la partida sigue viva).
@@ -248,6 +251,10 @@ export type ScoreFormState = 'hidden' | 'form' | 'sending' | 'sent' | 'error';
     .error {
       font-size: 0.8rem;
       color: var(--danger);
+    }
+    .queued {
+      font-size: 0.85rem;
+      color: var(--gold);
     }
     .saved {
       font-size: 0.9rem;

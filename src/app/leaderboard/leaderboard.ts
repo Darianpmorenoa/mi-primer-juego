@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, ElementRef, afterNextRender, input, output, viewChild } from '@angular/core';
 import { GAME_MODES } from '../game/game-modes';
 import { GameMode } from '../game/game.types';
@@ -11,6 +12,8 @@ import { LeaderboardEntry, LeaderboardStatus } from './leaderboard.service';
  */
 @Component({
   selector: 'app-leaderboard',
+  // Los pipes también se importan, igual que los componentes.
+  imports: [DatePipe],
   template: `
     <h2>Récords</h2>
 
@@ -38,7 +41,8 @@ import { LeaderboardEntry, LeaderboardStatus } from './leaderboard.service';
           <p class="message">No se pudo cargar la tabla.<br />¿Tienes conexión a internet?</p>
           <button type="button" class="secondary" (click)="retry.emit()">Reintentar</button>
         }
-        @case ('loaded') {
+        @default {
+          <!-- 'loaded' u 'offline': en los dos casos hay tabla que mostrar -->
           @if (entries().length > 0) {
             <ol>
               @for (entry of entries(); track $index) {
@@ -58,6 +62,23 @@ import { LeaderboardEntry, LeaderboardStatus } from './leaderboard.service';
         }
       }
     </div>
+
+    <!-- Avisos fuera de la lista, para que se vean aunque la lista tenga scroll -->
+    @if (status() === 'offline' && savedAt(); as date) {
+      <!-- "| date" es un PIPE: transforma un valor solo para mostrarlo.
+           Aquí convierte "2026-09-28T21:05:00Z" en "28/09 18:05". -->
+      <p class="note">
+        Sin conexión · tabla guardada el {{ date | date: 'dd/MM HH:mm' }} ·
+        <button type="button" class="link" (click)="retry.emit()">Reintentar</button>
+      </p>
+    }
+
+    @if (pendingCount() > 0) {
+      <p class="note pending">
+        {{ pendingCount() === 1 ? '1 récord espera' : pendingCount() + ' récords esperan' }}
+        conexión para enviarse.
+      </p>
+    }
 
     <button #closeButton type="button" class="play" (click)="close.emit()">Volver</button>
   `,
@@ -151,6 +172,23 @@ import { LeaderboardEntry, LeaderboardStatus } from './leaderboard.service';
     li:nth-child(odd) {
       background: rgb(255 255 255 / 0.04);
     }
+    .note {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .note.pending {
+      color: var(--gold);
+    }
+    .link {
+      padding: 0;
+      font: inherit;
+      color: var(--accent);
+      text-decoration: underline;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
     .rank {
       width: 1.6em;
       font-family: var(--font-retro);
@@ -203,6 +241,9 @@ export class LeaderboardComponent {
   readonly entries = input.required<readonly LeaderboardEntry[]>();
   readonly status = input.required<LeaderboardStatus>();
   readonly mode = input.required<GameMode>();
+  /** Si se muestra una copia guardada, cuándo se guardó. */
+  readonly savedAt = input<string | null>(null);
+  readonly pendingCount = input(0);
 
   readonly close = output<void>();
   readonly retry = output<void>();

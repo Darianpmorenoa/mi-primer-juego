@@ -40,6 +40,8 @@
         [entries]="leaderboard.entries()"
         [status]="leaderboard.status()"
         [mode]="game.mode()"
+        [savedAt]="leaderboard.savedAt()"
+        [pendingCount]="leaderboard.pendingCount()"
         (close)="showLeaderboard.set(false)"
         (retry)="leaderboard.load(game.mode())"
         (modeChange)="game.setMode($event)"
