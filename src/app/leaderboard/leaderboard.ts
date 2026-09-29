@@ -38,7 +38,10 @@ import { LeaderboardEntry, LeaderboardStatus } from './leaderboard.service';
           <p class="message">Cargando…</p>
         }
         @case ('error') {
-          <p class="message">No se pudo cargar la tabla.<br />¿Tienes conexión a internet?</p>
+          <p class="message">
+            No se pudo cargar la tabla y aún no hay una copia guardada de este modo.<br />
+            Ábrela una vez con internet para poder verla sin conexión.
+          </p>
           <button type="button" class="secondary" (click)="retry.emit()">Reintentar</button>
         }
         @default {

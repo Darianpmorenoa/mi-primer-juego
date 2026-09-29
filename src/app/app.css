@@ -61,6 +61,13 @@ h1 {
   max-width: 404px;
 }
 
+.version {
+  margin: -8px 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
 .hint {
   margin: 0;
   font-size: 0.85rem;

@@ -10,6 +10,7 @@ import { ScoreboardComponent } from './scoreboard/scoreboard';
 import { SwipeDirective } from './swipe/swipe.directive';
 import { TouchControlsComponent } from './touch-controls/touch-controls';
 import { UpdateBannerComponent } from './update-banner/update-banner';
+import { APP_VERSION } from './version';
 
 /** Qué dirección corresponde a cada tecla (flechas y WASD). */
 const KEY_TO_DIRECTION: Record<string, Direction> = {
@@ -60,6 +61,8 @@ export class App {
    * (qué se muestra), no del juego: por eso vive aquí y no en GameService.
    */
   protected readonly showLeaderboard = signal(false);
+
+  protected readonly version = APP_VERSION;
 
   /** Nombre del modo actual, para mostrarlo bajo el título. */
   protected readonly modeName = computed(
