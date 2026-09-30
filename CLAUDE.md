@@ -1,6 +1,6 @@
 # Handoff: Snake en Angular
 
-Contexto para retomar el proyecto en una sesión futura. Última actualización: 2026-09-28 (noche).
+Contexto para retomar el proyecto en una sesión futura. Última actualización: 2026-09-30.
 
 ## Qué es
 Juego Snake clásico hecho por Darian (principiante en Angular) **para aprender Angular**. El objetivo no es solo que el juego funcione, sino entender cómo se separan las responsabilidades.
@@ -13,8 +13,12 @@ Juego Snake clásico hecho por Darian (principiante en Angular) **para aprender 
 - **Síntoma:** en la app instalada en el iPhone, con modo avión, el juego abre y se puede jugar (el service worker funciona), pero **Récords** muestra error en vez de la copia guardada.
 - **Lo que sí funciona:** en Chromium (Playwright), con la versión PUBLICADA y el service worker activo, la tabla offline sale bien con el aviso "Sin conexión · tabla guardada el…". El código está bien en Chrome.
 - **Lo último que se hizo:** se publicó `v1.5` (número visible al pie) y un mensaje de error nuevo ("…aún no hay una copia guardada de este modo…") para distinguir versión vieja/nueva. Darian dijo "sigue sin verse" pero **no confirmó** si veía `v1.5` ni **qué texto exacto** salía.
-- **Siguiente paso:** preguntarle (1) ¿ve `v1.5` al pie?, (2) ¿qué mensaje exacto sale?, (3) ¿abrió Récords CON internet dentro de la app instalada (no en Safari) antes del modo avión? Recordar: en iOS la app instalada tiene **almacenamiento separado** de Safari.
-- **Hipótesis/ideas:** app sigue en versión vieja; copia nunca guardada en el almacenamiento de la app; algo de WebKit con el service worker (Angular SW responde 504 a peticiones fallidas no cacheadas; en Chrome eso cae al `error` y usa la copia). Alternativa robusta: añadir un `dataGroup` en `ngsw-config.json` para `GET .../rest/v1/scores` con estrategia `freshness`, o mostrar info de diagnóstico en pantalla. Playwright **no tiene WebKit instalado** (no instalarlo sin preguntar).
+- **DIAGNÓSTICO (2026-09-30):** Darian confirmó que la app instalada **NO muestra `v1.5`** y sale el mensaje VIEJO ("¿Tienes conexión a internet?"), aunque abrió Récords dentro de la app. → **La app instalada no se actualiza**: se quedó en una versión anterior a 4b. Causa probable: el SW de Angular busca actualizaciones en una tarea "idle" en segundo plano, e iOS suspende el SW de las apps instaladas antes de que se ejecute (por eso tampoco sale el aviso "Hay una versión nueva").
+- **Arreglo planeado (Darian pidió dejarlo para otro momento):**
+  1. En `update-banner.ts`: si `swUpdate.isEnabled`, llamar `swUpdate.checkForUpdate()` al arrancar y en `(document:visibilitychange)` cuando vuelve a estar visible (con `.catch()` para offline). Opcional: `swUpdate.unrecoverable` → `location.reload()`. Subir `APP_VERSION` a `1.6`.
+  2. Darian debe **borrar la app del iPhone y volver a añadirla** desde Safari UNA vez (la versión instalada no trae el arreglo). Avisarle que pierde récord local y nombre de la app (la tabla compartida no).
+  3. Luego probar: ver `v1.6` al pie → abrir Récords con internet en los 3 modos → modo avión → Récords.
+- Si con la versión nueva siguiera fallando: añadir un `dataGroup` en `ngsw-config.json` para `GET .../rest/v1/scores` con estrategia `freshness`, o mostrar diagnóstico en pantalla. Playwright **no tiene WebKit instalado** (no instalarlo sin preguntar).
 
 ## Cómo trabajar con Darian
 - Hablar en **español**, explicaciones para principiante.
